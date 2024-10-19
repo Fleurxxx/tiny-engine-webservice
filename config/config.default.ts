@@ -305,15 +305,12 @@ export default (appInfo) => {
   };
 
   // 文件上传接口
-  config.uploadFile = (file: any, token: string) => {
+  config.uploadFile = (form: any, token: string) => {
     return {
       [E_FOUNDATION_MODEL.MOONSHOT_V1_8K]: {
         httpRequestUrl: `https://api.moonshot.cn/v1/files`,
         httpRequestOption: {
-          data: {
-            file: file,
-            purpose: 'file-extract'
-          },
+          data: form,
           headers: {
             Authorization: `Bearer ${token}`
           }

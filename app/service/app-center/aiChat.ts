@@ -13,6 +13,7 @@ import { Service } from 'egg';
 import Transformer from '@opentiny/tiny-engine-transform';
 import { E_FOUNDATION_MODEL } from '../../lib/enum';
 
+
 export type AiMessage = {
   role: string; // 角色
   name?: string; // 名称
@@ -170,29 +171,45 @@ export default class AiChat extends Service {
    * @return
    */
 
-  async getFileContentFromAi(fileStream: any, chatConfig: any) {
-    const answer = await this.requestFileContentFromAi(fileStream, chatConfig);
+  async getFileContentFromAi(file: any, chatConfig: any) {
+    const answer = await this.requestFileContentFromAi(file, chatConfig);
     return this.ctx.helper.getResponseData({
       originalResponse: answer
     });
   }
 
+
   async requestFileContentFromAi(file: any, chatConfig: any) {
     const { ctx } = this;
     let res: any = null;
     try {
+      const form = new FormData();
+      console.log(file);
+      form.append('file', file);
+      form.append('purpose', 'file-extract');
+      // let file_object = await client.files.create({
+      //   file: fs.createReadStream('/Users/wangjunyue/work/tiny-engine-webservice/app/service/app-center/img.png'),
+      //   // file: file,
+      //   purpose: 'file-extract'
+      // });
+      console.log(form);
+
       // 文件上传
-      const aiUploadConfig = this.config.uploadFile(file, chatConfig.token);
+      const aiUploadConfig = this.config.uploadFile(form, chatConfig.token);
       const { httpRequestUrl, httpRequestOption } = aiUploadConfig[chatConfig.model];
       this.ctx.logger.debug(httpRequestOption);
       res = await ctx.curl(httpRequestUrl, httpRequestOption);
-      const imageObject = JSON.parse(res.res.data.toString());
-      const fileObject = imageObject.data[0].id;
-      // 文件解析
-      const imageAnalysisConfig = this.config.parsingFile(fileObject, chatConfig.token);
-      const { analysisImageHttpRequestUrl, analysisImageHttpRequestOption } = imageAnalysisConfig[chatConfig.model];
-      res = await ctx.curl(analysisImageHttpRequestUrl, analysisImageHttpRequestOption);
-      res.data = JSON.parse(res.res.data.toString());
+      console.log('============================文件上传结果===================================');
+      console.log(res);
+      console.error('报错信息:', res.data.toString('utf-8'));
+
+      // const imageObject = JSON.parse(res.res.data.toString());
+      // const fileObject = imageObject.data[0].id;
+      // // 文件解析
+      // const imageAnalysisConfig = this.config.parsingFile(fileObject, chatConfig.token);
+      // const { analysisImageHttpRequestUrl, analysisImageHttpRequestOption } = imageAnalysisConfig[chatConfig.model];
+      // res = await ctx.curl(analysisImageHttpRequestUrl, analysisImageHttpRequestOption);
+      // res.data = JSON.parse(res.res.data.toString());
     } catch (e: any) {
       this.ctx.logger.debug(`调用上传图片接口失败: ${(e as Error).message}`);
       return this.ctx.helper.getResponseData(`调用上传图片接口失败: ${(e as Error).message}`);
